@@ -1,0 +1,521 @@
+#
+# xmltp/Makefile
+# --------------
+#
+#  Copyright (c) 2001-2003 Jean-Francois Touchette
+#
+#  This library is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU Library General Public
+#  License as published by the Free Software Foundation; either
+#  version 2 of the License, or (at your option) any later version.
+#
+#  This library is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+#  Library General Public License for more details.
+#
+#  You should have received a copy of the GNU Library General Public
+#  License along with this library; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+#  (The file "COPYING" or "LICENSE" in a directory above this source file
+#  should contain a copy of the GNU Library General Public License text).
+#  -------------------------------------------------------------------------
+#
+# $Source: /ext_hd/cvs/xmltp/Makefile.linux,v $
+# $Header: /ext_hd/cvs/xmltp/Makefile.linux,v 1.1 2004/10/20 04:58:28 toucheje Exp $
+#
+# About XMLTP_GX macro/define:
+# ---------------------------
+#		This define modifies the way the source code
+#		is compiled in xmltp_ctx.c and xmltp_lex.c, but, NOT in
+#		exactly the same way... See (1) and (2).
+#
+#		Historically, at first, only the xmltp_gx.so/.sl Python
+#		module used all features related to XMLTP_GX.
+#		Now, to have a single grammar source file (the Bison
+#		grammar), XML2SYB also use the XMLTP_GX define for 
+#		xmltp_lex.c
+#	
+#	    (1) in xmltp_ctx.c, if XMLTP_GX is defined, the source code
+#		will assume that it will be linked as a Python module.
+#
+#	    (2) in xmltp_lex.c, XMLTP_GX controls the passing
+#		of the argument YYSTYPE *p_lval to various functions.
+#		This allows thread-safe parsing and it is supported
+#		by the Bison parser generator (see "%pure_parser" and
+#		related features in the Bison documentation).
+#
+# ----------------------------------------------------------------------
+# 2003jan22,jft: Edited for source publication. Required typical GNU/Linux 2.4.x,
+#		 system with Python 2.2.x and GNU Bison.
+# 2003jan23,jft: temporarily removed $(BIN)/test_xmltp_api from Linux_TARGETS
+# 2003feb05,jft: set SYBPLATFORM=Linux (might not be in the user's .bash_profile )
+# 2003feb28,jft: added xmltp_hosts.c
+# 2003jun12,jbl: Replace ct10rpc_parse_trgx.o with ct10rpc_parse.o
+# 2003jun25,jbl: Remove SYB_INCL from INC_DIRS
+# 2003aug28,jft: xml2syb uses sock_obj.o
+# 2004fev16,jft: added xmlfisrv.c
+#		 added -I$(SYBASE)/include to compile xml2syb.c
+# 2004nov01,jft: PYTHON_INC=/usr/local/include/python2.3/
+# 2006jun11,jft: added -DNO_CT10API=1 on command line to compile xmlfisrv.c
+#
+
+
+
+#
+# The C source files contain some #ifdef LINUX
+#
+LINUX=-DLINUX=1
+
+
+#
+# We need Python 2.3.x, with its header files
+#
+# Python 2.3.x should have its header files under  /usr/local/include/Python2.3
+#
+# If you need some other path, You should change the value of PYTHON_INC to match
+# how your installation of Python is done on your system.
+#
+PYTHON_INC=/usr/local/include/python2.3/
+
+
+
+#
+# *** macros about paths:
+#
+OBJ_DIR		= ../obj
+BIN_DIR		= ../../bin
+SLIB            = ../../lib
+BIN		= $(BIN_DIR)
+INCPATH		= ../include
+CT10API		= ../ct10api
+CT10_OBJ	= $(OBJ_DIR)
+OBJ		= $(OBJ_DIR)
+APP_OBJ 	= $(OBJ_DIR)
+SOCK_FN_OBJ	= $(OBJ_DIR)
+OBJ		= $(OBJ_DIR)
+
+
+
+
+# SYBASE Open Client dependencies:
+#
+# *** To compile XML2SYB, you need Sybase Open Client Library (tm)
+# *** Sybase 11.9.2 for Linux is required.
+# *** Sybase macros are defined by shell environment variables.
+# *** If these are not set in your .bash_profile or .profile, look
+# *** at the .bash_profile of the sybase user after Sybase RPMs
+# *** have been installed.
+# 
+# These are the usual values for Sybase variables in .bash_profile on Linux:
+#
+## SYBASE   = /opt/sybase
+## SYBPLATFORM=Linux
+#
+# OK, it is too easy to forget to put SYBPLATFORM=Linux in one's .bash_profile 
+# also, this Makefile expects to run under Linux only. So, let's just set
+# the value as "Linux":
+SYBPLATFORM=Linux
+
+
+#
+# Sybase libs on Linux:
+#
+SYBASE_LIBS= -L$(SYBASE)/lib	\
+		-Wl,-a,archive			\
+		$(SYBASE)/lib/libblk.a		\
+		$(SYBASE)/lib/libct.so		\
+		$(SYBASE)/lib/libcs.so		\
+		$(SYBASE)/lib/libcomn.so	\
+                $(SYBASE)/lib/libsybtcl.so 	\
+                $(SYBASE)/lib/libsybdb.so 	\
+		$(SYBASE)/lib/libintl.so	\
+		$(SYBASE)/lib/libinsck.so	\
+		-lm -ldl -Wl,-a,shared 
+
+#
+# common macros used for each cc command:
+#
+DEFS = 	   -DDEBUG -D$(SYBPLATFORM)=1  $(LINUX) 
+INC_DIRS = -I$(INCPATH) -I$(CT10API)  -I../sock_fn  -I$(PYTHON_INC) -I$(PYTHON_INSTALL)
+
+
+#
+# CFLAGS on Linux/GCC:
+#
+CFLAGS	   = -g  $(INC_DIRS) $(DEFS)
+CFLAGS_OPT = -O  $(INC_DIRS) $(DEFS)
+
+
+# Macros
+#
+# CC	Compiler
+#
+CC=cc
+LINK=$(CC) $(LDFLAGS)
+SHELL=/bin/sh
+
+
+#
+# List(s) of objects to build...
+#
+#
+GX_POLL_OBJS=$(APP_OBJ)/gx_poll.o
+
+
+# GX_PARSER_OBJS :
+#
+GX_PARSER_OBJS=$(APP_OBJ)/xmltp_gxwrapper.o	\
+		$(APP_OBJ)/xmltp_gx.o		\
+		$(APP_OBJ)/xmltp_gram.tab.o	\
+		$(APP_OBJ)/xmltp_parser_gx.o	\
+		$(APP_OBJ)/xmltp_lex_gx.o  	\
+		$(APP_OBJ)/xmltp_ctx_gx.o
+
+COMMON_PARSER_OBJS=$(APP_OBJ)/xmltp_util.o
+
+GX_UNIT_TEST_OBJS=$(APP_OBJ)/xmltp_parser_gx.o	\
+		   $(APP_OBJ)/xmltp_lex_gx.o  \
+		   $(APP_OBJ)/xmltp_ctx_gx.o  \
+		   $(APP_OBJ)/xmltp_gram.tab.o	\
+		   $(APP_OBJ)/xmltp_test_gx.o
+
+XML2SYB_OBJS=	   $(APP_OBJ)/xml2syb.o    \
+		   $(APP_OBJ)/xmltp_parser_2db.o \
+		   $(APP_OBJ)/xmltp_writer.o \
+		   $(APP_OBJ)/xmltp_lex_2db.o  \
+		   $(APP_OBJ)/xmltp_ctx_2db.o  \
+		   $(APP_OBJ)/xmltp_gram.tab.o \
+		   $(APP_OBJ)/xmltp_encoder.o	\
+		   $(APP_OBJ)/xmltp_hosts.o
+
+XMLFISRV_OBJS=	   $(APP_OBJ)/xmlfisrv.o    \
+		   $(APP_OBJ)/xmltp_parser_2db.o \
+		   $(APP_OBJ)/xmltp_writer.o \
+		   $(APP_OBJ)/xmltp_lex_2db.o  \
+		   $(APP_OBJ)/xmltp_ctx_2db.o  \
+		   $(APP_OBJ)/xmltp_gram.tab.o \
+		   $(APP_OBJ)/xmltp_encoder.o	\
+		$(OBJ)/intstrtb.o	\
+		   $(OBJ)/apl_log1.o
+
+XMLTP_TEST_OBJS=   $(APP_OBJ)/xmltp_parser_out.o \
+		   $(APP_OBJ)/xmltp_lex_gx.o  \
+		   $(APP_OBJ)/xmltp_ctx_test.o  \
+		   $(APP_OBJ)/xmltp_gram.tab.o
+
+XMLTP_API_OBJS=    $(APP_OBJ)/xmltp_api.o \
+        	   $(APP_OBJ)/xmltp_parser_api.o \
+        	   $(APP_OBJ)/xmltp_api_compat.o \
+		   $(APP_OBJ)/xmltp_ctx_api.o \
+        	   $(APP_OBJ)/test_xmltp_api.o \
+		   $(APP_OBJ)/xmltp_writer.o \
+                   $(APP_OBJ)/xmltp_gram.tab.o     \
+                   $(APP_OBJ)/xmltp_lex_2db.o
+
+TEST_XMLTP_API_OBJS=	$(APP_OBJ)/apl_log1.o \
+			$(APP_OBJ)/intstrtb.o \
+                        $(APP_OBJ)/linklist.o \
+                        $(APP_OBJ)/read1ln.o \
+                        $(APP_OBJ)/getline1.o \
+                        $(APP_OBJ)/ucfg.o \
+                        $(APP_OBJ)/ucfg_clt.o \
+                        $(APP_OBJ)/ct10rpc_parse.o \
+                        $(APP_OBJ)/ct10str.o \
+                        $(APP_OBJ)/errutl_1.o \
+                        $(APP_OBJ)/parse_argument.o \
+                        $(APP_OBJ)/check_num_string.o \
+                        $(APP_OBJ)/opt_log.o \
+                        $(APP_OBJ)/ctapreco.o \
+                        $(APP_OBJ)/ct10init.o \
+                        $(APP_OBJ)/term_util.o \
+                        $(APP_OBJ)/sock_fn.o \
+                        $(APP_OBJ)/sock_obj.o \
+                        $(APP_OBJ)/memalloc.o \
+                        $(APP_OBJ)/dynarray.o \
+                        $(APP_OBJ)/log_time.o
+
+
+#
+# modules from the ../ct10api :
+#
+CT10_OBJ_LIST=  $(CT10_OBJ)/ct10api.o	\
+		$(CT10_OBJ)/ct10reco.o  \
+		$(CT10_OBJ)/ct10init.o  \
+		$(CT10_OBJ)/parse_argument.o  \
+		$(CT10_OBJ)/opt_log.o  \
+		$(CT10_OBJ)/ucfg_clt.o  \
+		$(CT10_OBJ)/ct10rpc_parse.o \
+		$(CT10_OBJ)/ct10str.o	\
+		$(OBJ)/apl_log1.o	\
+		$(OBJ)/errutl_1.o	\
+		$(OBJ)/intstrtb.o	\
+		$(OBJ)/linklist.o	\
+		$(OBJ)/read1ln.o	\
+		$(OBJ)/ucfg.o		\
+		$(OBJ)/getline1.o	   \
+		$(OBJ)/check_num_string.o
+
+############################################################################## 
+#
+#	Default Build Rules
+#
+############################################################################## 
+.SUFFIXES:	.c .o
+
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+
+
+############################################################################## 
+#
+#	Target executables:
+#
+############################################################################## 
+
+all:	Linux_TARGETS
+
+
+# 2003jan23,jft: temporarily removed $(BIN)/test_xmltp_api from Linux_TARGETS
+#
+Linux_TARGETS:	$(APP_OBJ)/xmltp_ctx_test.o	\
+		$(SLIB)/xmltp_gx.so	\
+		$(SLIB)/gx_poll.so	\
+		$(BIN)/xmlfisrv		\
+		$(BIN)/xml2syb		\
+		$(BIN)/xmltp_test
+	@echo Linux_TARGETS are up-to-date
+
+
+#
+# Python Gateway-X "poll" module (shared library):
+#
+#
+# Linux:
+#
+$(SLIB)/gx_poll.so:  $(GX_POLL_OBJS)
+	gcc -shared $(GX_POLL_OBJS)  $(SOCK_FN_OBJ)/sock_fn.o  -o $@
+
+
+#
+# Python XMLTP Gateway-X module (shared library):
+#
+# Linux:
+#
+$(SLIB)/xmltp_gx.so:  $(GX_PARSER_OBJS)  $(COMMON_PARSER_OBJS)  
+	gcc -shared $(GX_PARSER_OBJS)  $(COMMON_PARSER_OBJS) \
+		$(SOCK_FN_OBJ)/sock_fn.o  -o $@
+
+
+
+
+#
+# Unit testing program for XMLTP parser:   xmltpgx
+#
+$(BIN)/xmltpgx:	 $(COMMON_PARSER_OBJS)   $(GX_UNIT_TEST_OBJS)
+	$(CC) $(COMMON_PARSER_OBJS)  $(GX_UNIT_TEST_OBJS)  $(SOCK_FN_OBJ)/sock_fn.o  -o $@
+
+
+
+#
+# XML-to-database connector (for Sybase):
+#
+$(BIN)/xml2syb:	 $(COMMON_PARSER_OBJS)    $(XML2SYB_OBJS)
+	$(CC) $(COMMON_PARSER_OBJS)  $(XML2SYB_OBJS)  $(SOCK_FN_OBJ)/sock_fn.o $(SOCK_FN_OBJ)/sock_obj.o \
+		$(CT10_OBJ_LIST) $(SYBASE_LIBS) -o $@
+
+#
+# XML-from-File server "xmlfisrv":
+#
+$(BIN)/xmlfisrv: $(COMMON_PARSER_OBJS)    $(XMLFISRV_OBJS)
+	$(CC) $(COMMON_PARSER_OBJS)  $(XMLFISRV_OBJS)  $(SOCK_FN_OBJ)/sock_fn.o $(SOCK_FN_OBJ)/sock_obj.o  -o $@
+
+#
+# xmltp_hosts file reading module:
+#
+$(APP_OBJ)/xmltp_hosts.o: xmltp_hosts.c  
+	$(CC) $(CFLAGS)  xmltp_hosts.c  -c 
+	mv $(@F) $(APP_OBJ)
+
+#
+# Markup delimiter encoder decoder:
+#
+$(APP_OBJ)/xmltp_encoder.o: xmltp_encoder.c 
+	$(CC) $(CFLAGS_OPT)  xmltp_encoder.c -c  
+	mv $(@F) $(APP_OBJ)
+
+# XML-from-File server "xmlfisrv":
+# 
+$(APP_OBJ)/xmlfisrv.o: xmlfisrv.c  xml2db.h xmltp_ctx.h xmltp_lex.h
+	$(CC) $(CFLAGS_OPT) -DNO_CT10API=1   xmlfisrv.c -c  
+	mv $(@F) $(APP_OBJ)
+
+#
+# XML-to-Sybase gateway:
+# 
+$(APP_OBJ)/xml2syb.o: xml2syb.c  xml2db.h
+	$(CC) $(CFLAGS_OPT)  -I$(SYBASE)/include  xml2syb.c -c  
+	mv $(@F) $(APP_OBJ)
+
+$(APP_OBJ)/xmltp_parser_2db.o:  xmltp_parser_2db.c  \
+				xmltp_parser.h      \
+				xmltp_ctx.h	    \
+				xmltp_util.h	    \
+				xml2db.h
+	$(CC) $(CFLAGS)  xmltp_parser_2db.c -c -DXML2DB=1   
+	mv $(@F) $(APP_OBJ)
+
+#
+# xmltp_lex.c and xmltp_ctx.c are compiled to be single-thread here:
+#
+$(APP_OBJ)/xmltp_ctx_2db.o: xmltp_ctx.c  xmltp_ctx.h  xml2db.h
+	$(CC) $(CFLAGS)  xmltp_ctx.c -c    -DXML2DB=1   
+	mv xmltp_ctx.o $(APP_OBJ)/xmltp_ctx_2db.o
+
+#
+# xmltp_api required a xmltp_ctx without the xml2db stuff.
+#
+
+$(APP_OBJ)/xmltp_ctx_api.o: xmltp_ctx.c  xmltp_ctx.h
+	$(CC) $(CFLAGS)  xmltp_ctx.c -c 
+	mv xmltp_ctx.o $(APP_OBJ)/xmltp_ctx_api.o
+
+#
+# But, xmltp_lex_2db.o also expect to be linked with a Bison re-entrant
+# "pure parser". Hence, the -DXMLTP_GX=1 on the command line of $(CC).
+#
+$(APP_OBJ)/xmltp_lex_2db.o: xmltp_lex.c  \
+			xmltp_parser.h \
+			xmltp_keyw.h \
+			xmltp_gram.tab.h
+	$(CC) $(CFLAGS)  xmltp_lex.c -c   -DXML2DB=1    -DXMLTP_GX=1 
+	mv xmltp_lex.o $(APP_OBJ)/xmltp_lex_2db.o
+
+
+#
+# Special modules for UNIT TESTING of XMLTP parser:
+# 
+# xmltp_ctx.c is compiled to allow fake input from stdin
+#
+$(APP_OBJ)/xmltp_ctx_test.o: xmltp_ctx.c  xmltp_ctx.h
+	### You need a good SYBASE environment variable to be able to make ct10api and xmltp.
+	echo "SYBASE = $(SYBASE)"
+ 	### SYBASE = $(SYBASE)
+	####
+	$(CC) $(CFLAGS)  xmltp_ctx.c -c    -DFAKE_RECV=1
+	mv xmltp_ctx.o $(APP_OBJ)/xmltp_ctx_test.o
+
+$(APP_OBJ)/xmltp_parser_out.o: xmltp_parser_out.c  xmltp_parser.h
+	$(CC) $(CFLAGS)  xmltp_parser_out.c -c 
+	mv $(@F) $(APP_OBJ)
+
+$(APP_OBJ)/xmltp_test.o: xmltp_test.c 
+	$(CC) $(CFLAGS)  xmltp_test.c -c 
+	mv $(@F) $(APP_OBJ)
+
+$(BIN)/xmltp_test:  $(APP_OBJ)/xmltp_test.o $(COMMON_PARSER_OBJS)    $(XMLTP_TEST_OBJS)
+	$(CC) $(APP_OBJ)/xmltp_test.o $(COMMON_PARSER_OBJS)  $(XMLTP_TEST_OBJS)  $(SOCK_FN_OBJ)/sock_fn.o -o $@
+
+
+
+#
+# Common (shared) XMLTP modules:
+#
+$(APP_OBJ)/xmltp_util.o: xmltp_util.c  xmltp_util.h
+	$(CC) $(CFLAGS)  xmltp_util.c -c 
+	mv $(@F) $(APP_OBJ)
+
+$(APP_OBJ)/xmltp_writer.o: xmltp_writer.c  xmltp_writer.h  xml2db.h  xmltp_tags.h 
+	$(CC) $(CFLAGS_OPT)  xmltp_writer.c -c 
+	mv $(@F) $(APP_OBJ)
+
+
+#
+# Modules specific to the XMLTP gateways (CIG-X, TRG-X) :
+#
+
+# GX poll module (.o):
+#
+$(APP_OBJ)/gx_poll.o: gx_poll.c  
+	$(CC) $(CFLAGS)  gx_poll.c  -c 
+	mv $(@F) $(APP_OBJ)
+
+
+# XMLTP modules (.o):
+#
+$(APP_OBJ)/xmltp_parser_gx.o:  xmltp_parser_gx.c  \
+				xmltp_parser.h      \
+				xmltp_ctx.h
+	$(CC) $(CFLAGS)  xmltp_parser_gx.c -c -DXMLTP_GX  -DXMLTP_GX_PY=1 
+	mv $(@F) $(APP_OBJ)
+
+$(APP_OBJ)/xmltp_lex_gx.o: xmltp_lex.c  \
+			xmltp_parser.h \
+			xmltp_keyw.h \
+			xmltp_gram.tab.h
+	$(CC) $(CFLAGS)  xmltp_lex.c -c -DXMLTP_GX  -DXMLTP_GX_PY=1
+	mv xmltp_lex.o $(APP_OBJ)/xmltp_lex_gx.o
+
+$(APP_OBJ)/xmltp_ctx_gx.o: xmltp_ctx.c  xmltp_ctx.h 
+	$(CC) $(CFLAGS)  xmltp_ctx.c -c   -DXMLTP_GX=1   -DXMLTP_GX_PY=1 -DDEF_DEBUG_LEVEL=1
+	mv xmltp_ctx.o $(APP_OBJ)/xmltp_ctx_gx.o
+
+
+$(APP_OBJ)/xmltp_gx.o: xmltp_gx.c  xmltp_gx.h  xmltp_ctx.h 
+	$(CC) $(CFLAGS)  xmltp_gx.c -c  -DXMLTP_GX=1   -DXMLTP_GX_PY=1  
+	mv $(@F) $(APP_OBJ)
+
+$(APP_OBJ)/xmltp_gxwrapper.o: xmltp_gxwrapper.c  xmltp_gx.h  xmltp_ctx.h 
+	$(CC) $(CFLAGS)  xmltp_gxwrapper.c -c  -DXMLTP_GX=1   -DXMLTP_GX_PY=1  
+	mv $(@F) $(APP_OBJ)
+
+
+$(APP_OBJ)/xmltp_gram.tab.o: xmltp_gram.tab.c	xmltp_parser.h
+	$(CC) $(CFLAGS)  xmltp_gram.tab.c -c 
+	mv $(@F) $(APP_OBJ)
+
+xmltp_gram.tab.h:	xmltp_gram.y
+	bison -d xmltp_gram.y
+
+xmltp_gram.tab.c:	xmltp_gram.y
+	bison -d xmltp_gram.y
+
+
+# 
+# for Unit Testing of Bison generated parser :
+#
+$(APP_OBJ)/xmltp_test_gx.o: xmltp_test_gx.c  xmltp_parser.h
+	$(CC) $(CFLAGS)  xmltp_test_gx.c -c 
+	mv $(@F) $(APP_OBJ)
+
+
+
+# ***********************
+# xmltp_api related objects and target:
+# ***********************
+
+$(APP_OBJ)/xmltp_parser_api.o:	xmltp_parser_api.c xmltp_parser.h
+				$(CC) $(CFLAGS) xmltp_parser_api.c -c
+				mv $(@F) $(APP_OBJ)
+
+$(APP_OBJ)/xmltp_api_compat.o:	xmltp_api_compat.c 
+				$(CC) $(CFLAGS) $(TDS_INCL) xmltp_api_compat.c -c
+				mv $(@F) $(APP_OBJ)
+
+$(APP_OBJ)/xmltp_api.o:		xmltp_api.c 
+				$(CC) $(CFLAGS) $(TDS_INCL) xmltp_api.c -c
+				mv $(@F) $(APP_OBJ)
+
+$(APP_OBJ)/test_xmltp_api.o:	test_xmltp_api.c 
+				$(CC) $(CFLAGS) test_xmltp_api.c -c
+				mv $(@F) $(APP_OBJ)
+
+$(BIN)/test_xmltp_api:	$(XMLTP_API_OBJS)
+			$(CC) $(XMLTP_API_OBJS)  $(TEST_XMLTP_API_OBJS) -o $@
+
+#
+# End of Makefile
+#
+
