@@ -1,0 +1,412 @@
+# gxconfig
+# ---------
+#
+# $Header$
+#
+# Gateways XMLTP/L config file "gxconfig"
+# ---------------------------------------
+# 
+# The "-Ttype" argument must be given on the command line of the server 
+# startup. The loading of the config parameters is done in three (3) 
+# steps:
+#	1) the "BASE" section is loaded
+#	2) the "type" section is loaded (RRG or CLIENT_GATEWAY)
+#	3) the "server_name" section of the "dbsrvcfg.<hostname>" file
+#	   is loaded.
+#
+# If a parameter loaded at steps 2 or 3 was previously defined
+# the new value associated with the parameter overrides the old one.
+#
+# -------------------------------------------------------------------------
+# Versions:
+# 2003jan24,jft: first version of this file.
+# 2003sep29,jft: added TRACE_INIT 
+# 2006feb09,jft: intercept example is now "out1"
+#		 out1_STORAGE  PERSISTENT # uses persistent storage
+#		 PERSISTENT_QUEUES_DIR   ./QueuesStorage
+# 2006jun12,jft: out1_STORAGE  IN_MEMORY -- so, it can work out of the box, without Berkeley DB nor bsddb3
+#
+
+
+#
+# BASE - Common configuration section shared by all types of servers
+#
+BASE
+	# TRACE_INIT assigns trace levels to various groupes on modules:
+	#
+	TRACE_INIT			server		callparser	rpc	\
+					connpool	intercept
+	#
+	# The TRACE value can be a number, like 1 to 20 (or even higher like 40 if needed),
+	# or, one of the following keywords: none, low, medium, full
+	# All of this is similar to the "trace" operator command.
+	#
+	TRACE_rpc			medium	# for unit testing and debugging
+	##TRACE_rpc			low	# a lower trace level gives faster performance
+	TRACE_server			low
+	TRACE_callparser		low
+	TRACE_connpool			low
+	TRACE_intercept			medium
+
+
+
+	CALLPARSERSPOOL_MAXRES	25		### can be fine-tuned
+
+	# NOTE:
+	#	 MAX_CLIENTS_SOCKETS is the maximum number of client sockets (total)
+	#	 MAX_CLT_CONNECTIONS is the max number of ordinary client connections
+	#	 (non admin) 
+	#	 The config must have:
+	#		MAX_CLIENTS_SOCKETS > MAX_CLT_CONNECTIONS 
+	#
+	#	 Your server might have a large number (more than 1000) of client connections,
+	#	 or a small number (less than 200). You should adjust the values of these
+	#	 two parameters in your "gxconfig.hostname" file.
+	#
+	MAX_CLIENTS_SOCKETS	500	# see also below, MAX_CLT_CONNECTIONS
+
+	MAX_CLT_CONNECTIONS	200	# Maximum Client Logins
+
+	CLIENT_RECV_TIMEOUT	30	# for recv() from client connection
+	CLIENT_SEND_TIMEOUT	20	# for send() to  client connection
+
+	#
+	# Messages Log file:
+	#
+	LOG_FILENAME		gxserver.log	# the command line overrides this parameter!
+
+
+	#
+	# RPCs Groups:
+	# -----------
+	#
+	# (see documentation of "gate { open | close}, <group>" operator command
+	#  for explanations)
+	#
+	GROUPS_OF_RPC		mktg	\
+				acct	\
+				webf	\
+				smtp
+
+
+	# NOTE about RPCs Groups and RPC_FOR_DEST_xx
+	# ------------------------------------------
+	# At the time of the creation of a destination "xxxx" (at server init),
+	# if a param RPC_FOR_DEST_xxxx is missing, the server configuration 
+	# functin will use RPCS_OF_GROUP_xxxx instead. (It will also write
+	# WARNing message in the log about this).
+	#
+
+
+	PATH_OF_UNAVAILABITY_MESSAGES	cfg/
+
+	# The server will concatenate this path in front of the 
+	# following filenames:
+	#
+	#   closed_acct    when the group "acct" is closed
+	#   closed_smtp    when the group "smtp" is closed
+	#   ...
+	#   down_webf      when destination "webf" is closed
+	#   ...
+	#   rpc_closed     when the "RPC gate" is closed
+	#   conn_closed    when the "connect gate" is closed
+	#
+
+	RPCS_OF_GROUP_acct	SPACCT_*	\
+				spacct_*
+
+	RPCS_OF_GROUP_mktg	SPMKTG_*	\
+				spmktg_*
+
+	RPCS_OF_GROUP_webf	SPWEB_*	\
+				spweb_*
+
+	RPCS_OF_GROUP_smtp	SPWEB_ADD_EMAIL		\
+				spweb_add_email
+
+	#							
+	# Special Users: operator, etc.
+	#
+	#
+	WHO_HAS_STATS_PERM	oper 	su 	\
+				demo		\
+				dba		\
+				tomcat
+
+
+	WHO_HAS_OPER_PERM	oper 	su 	\
+				dba
+
+	WHO_HAS_SHUTDOWN_PERM	oper 	su 	\
+				dba
+
+	PWD_FILE_OF_su			cfg/passwd.su
+	PWD_FILE_OF_oper		cfg/passwd.oper
+	PWD_FILE_OF_demo		cfg/passwd.demo
+	PWD_FILE_OF_tomcat		cfg/passwd.tomcat
+	PWD_FILE_OF_dba			cfg/passwd.dba
+
+
+	INITIAL_GATE_STATUS	closed	# Generally, we do NOT want this gate
+					# to open immediately at start-up.
+					#
+					# To have the gate closed on start-up,
+					# type in:
+					#	   closed  <=== in lowercase!
+					#
+					# (Any other values mean it is open).
+
+	#
+	# Only the "CLIENT_GATEWAY" type server(s) have a real AUTHENTICATION_RPC,
+	# here we give this parameter a non-valid value:
+	#
+	AUTHENTICATION_RPC	bad@@_check_password	# will fail if used
+
+
+	#
+	# Parameters related to outgoing connections to "Destinations":
+	# -----------------------------------------------------------
+
+	# DESTINATIONS
+	# DEFAULT_DESTINATION
+	#
+	# Various XMLTP server types have the different config for the DESTINATIONS,
+	# DEFAULT_DESTINATION and for the RPC routing (RPC_FOR_DEST_xxx).
+	#
+	# See the specific sections.
+	#
+
+	#
+	# Default Attributes for any Destination:
+	#
+	DEST_SEND_TIMEOUT	30	### do not confuse with RPC_TIMEOUT, value common all server types
+
+	MAX_CONNECTIONS		5	# Max nb of conn in an outgoing pool
+					# this value is usually overridden
+					# in the local "gxconfig.<hostname>"
+					# file on a per server basis.
+
+	USR_ID			USR_ID_not_init		# see CLIENT_GATEWAY section and
+	USR_PWD_FILE		/dev/null		# local config file.
+
+
+	# 
+	# RPC_TIMEOUT and RPC_RETRY -- NOTES for gxserver (RRG-X and CLIENT_GATEWAY) and XML2SYB
+	# -------------------------    ------------------------------------------------
+	#
+	#   The Java or VB clients must be configured with a RPC timeout of 210 seconds and
+	#   NO retry (retry=1).
+	#
+	#   CLIENT_GATEWAY must be configured with RPC timeout:   20 + 140 seconds (NO retry, except broken connection)
+	#   RRG-X must be configured with RPC timeout:   50 + 70 seconds (NO retry, except broken connection)
+	#   XML2SYB must be configured with RPC timeout: 10 + 50 sec. (only 2 retry on DEADLOCK within first 10 sec)
+	#
+	#   The following inequations must be kept true to avoid dataserver congestion:
+	#
+	#
+	#		XML2SYB          RRG         CLIENT_GW      Java or VB
+	#		--------      -----------    ----------     ----------
+	#		(10 + 50)  <  70    50+70  < 140  20+140  <  175
+	#
+	#
+	#   This config avoids database server congestion caused by multiple clients 
+	#   retrying RPC while the CLIENT_GATEWAY/RRG/XML2SYB is not finished waiting for the completion of 
+	#   the previous RPC request.  
+	#
+	#   See RPC_TIMEOUT in RRG and CLIENT_GATEWAY sections...
+	#
+
+#
+# End of BASE section
+#
+
+
+#
+# CLIENT_GATEWAY -- Beginning of CLIENT_GATEWAY section
+#
+#
+CLIENT_GATEWAY
+	MAX_WAIT_IN_DEST_QUEUE	20	# 20 seconds max to wait for outgoing connection
+	RPC_TIMEOUT		140	# 140 > RRG (50 + 70)
+
+
+	#
+	# Only a CLIENT_GATEWAY should use the AUTHENTICATION_RPC. It is only really 
+	# defined in this sections here:
+	#
+	AUTHENTICATION_RPC	spacct_login
+
+
+	#
+	# Configuration of destinations for the CLIENT_GATEWAY:
+	#
+	# NOTE: The CLIENT_GATEWAY establish all its outgoing connections to a RRG.
+
+	INITIAL_ROUTE		A
+
+	DESTINATIONS		rrg
+
+	DEFAULT_DESTINATION	rrg	# All RPC are sent to "rrg" dest.
+
+
+	DEST_LOGIN_PROC		login		# regproc in RRG-X ###
+
+	DEST_ROUTE_A		DummySrvNameA	# the local gxconfig.<hostname> file must override this value
+
+	rrg_DEST_ROUTE_A	XMLTP_RRG	# the local gxconfig.<hostname> file must override this value
+
+
+	#
+	# Specific Attributes for "RRG" destination:
+	#
+	rrg_MAX_CONNECTIONS	5	# Maximum Backend connections to RRG
+
+	rrg_USR_ID		client_gateway		# User Id for CLIENT_GATEWAY to log on to RRG
+	rrg_USR_PWD_FILE	cfg/passwd.client_gateway
+
+
+
+#
+# RRG - Beginning of RRG section
+#
+RRG
+	# NOTE:
+	#	 MAX_CLIENTS_SOCKETS is the maximum number of client sockets (total)
+	#	 MAX_CLT_CONNECTIONS is the max number of ordinary client connections
+	#	 (non admin) 
+	#	 The config must have:
+	#		MAX_CLIENTS_SOCKETS > MAX_CLT_CONNECTIONS 
+	#
+	MAX_CLIENTS_SOCKETS	200	# see also below, MAX_CLT_CONNECTIONS
+
+	MAX_CLT_CONNECTIONS	100	# Maximum Client Logins
+
+
+	### Interceptions config for RRG:	*** These are EXAMPLES ***
+	#
+	# NOTE: if param(s) are missing for an intercept definition, the server will not start.
+	#
+	#
+	PERSISTENT_QUEUES_DIR	./QueuesStorage
+
+	INTERCEPT_DEFINITIONS	out1		# queue to send "transactions" to a (hypothetical) out1 gateway
+
+	#
+	# "out1" intercept definition, filter, queue :
+	#
+	out1_INTERCEPT_RPCS	SPWEB_ADD_OUT_1		\
+				spweb_add_out_1
+
+	out1_FILTERS		out1
+
+	out1_PARAMS		none		# no filtering based on param(s)
+
+	out1_TYPE		QUEUE
+	#out1_STORAGE		PERSISTENT	# could also be IN_MEMORY
+	out1_STORAGE		IN_MEMORY	# could also be PERSISTENT
+
+	out1_COLUMNS		tx_id
+	out1_TRANS_ID		msg_id
+	out1_Q_MAX		20000
+	out1_MAX_ROWS_IN_GET	100
+	out1_NOTIFY_UDP_ADDRESS	localhost:8803
+	out1_NOTIFY_INTERVAL	30
+	out1_LOG_MARKER		"*New transaction:"
+	out1_LOG_MARKER_FAILED	"*Bad transaction:"
+	out1_OPEN_AT_INIT		yes
+	out1_QUEUE_CLOSED_MSG	"out1 gateway Queue is Stopped"
+	out1_QUEUE_FULL_MSG	"out1 gateway Queue is Full"
+
+	#
+	### End of RRG-X intercept definitions ###
+	#
+
+	###
+	WHO_HAS_STATS_PERM	oper 	su 	\
+				demo		\
+				dba		\
+				tomcat		\
+				out1_gw			# this one was NOT in the BASE section
+
+	PWD_FILE_OF_out1_gw	cfg/passwd.out1_gw
+
+
+	#
+	# Configuration of destinations for RRG:
+	#	
+	INITIAL_ROUTE		A
+
+	DEFAULT_DESTINATION	default		# default destination of RPCs
+
+	DEST_LOGIN_PROC		login		# name of regproc in XML2SYB
+
+	DEST_ROUTE_A		XML2SYB_1	# the local gxconfig.<hostname> file must override this value
+	DEST_ROUTE_B		DummySrvNameB	# the local gxconfig.<hostname> file must override this value
+
+	default_DEST_ROUTE_A	XML2SYB_1	# the local gxconfig.<hostname> file must override these value(s)
+	acct_DEST_ROUTE_A	XML2SYB_ACCT	# the local gxconfig.<hostname> file must override these value(s)
+
+
+	DESTINATIONS		default	\
+				mktg	\
+				acct	\
+				webf		# no destination "out1"... (destinations are NOT groups of RPCs)
+
+	#
+	# The "RPC Routing" mechanism first uses the DESTINATIONS parameter.
+	#
+	RPC_FOR_DEST_acct	SPACCT_*	\
+				spacct_*
+
+	RPC_FOR_DEST_mktg	SPMKTG_*	\
+				spmktg_*
+
+	RPC_FOR_DEST_webf	SPWEB_*	\
+				spweb_*
+
+
+	# 
+	# See long comment about RPC_TIMEOUT in the BASE section.
+	# -------------------------------------------------------
+	#
+	### RPC_RETRY, RPC_RETRY_IF_TIMEOUT are not used in gxserver, because, xml2syb takes care of any retry.
+	#
+
+	MAX_WAIT_IN_DEST_QUEUE	50	# 50 seconds max to wait for outgoing connection
+	RPC_TIMEOUT		70	# 70 > (XML2SYB)
+	
+	USR_ID			rrg_loginid
+
+	USR_PWD_FILE		/dev/null		# see local config file.
+
+
+	MAX_CONNECTIONS		3	# most dest conn pool are small,
+					# others have specific override value
+
+	#
+	# Specific Attributes for "webf" dest:
+	#
+	webf_MAX_CONNECTIONS	10	### was 5
+	webf_USR_ID		webf
+
+	#
+	# Specific Attributes for other destinations...
+	#
+	mktg_USR_ID		mktg
+	acct_USR_ID		acct
+
+
+	#
+	### parameters used for Shutdown sequence:
+	#
+	QUEUE_DUMP_DIR		./queue_dump	# must be a directory name
+
+
+#
+# End of RRG section
+# 
+
+
+#
+# *** End of gxconfig ***
+#

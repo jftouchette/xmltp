@@ -1,0 +1,59 @@
+# gxconfig.localhost   --- This file must be renamed to match _your_ hostname!
+# ------------------
+#
+#
+# 2003jan24,jft: first version for open source distribution
+# 2004feb16,jft: changed: default_MAX_CONNECTIONS   5  # 30 was too much for usual small tests
+# 2006feb09,jft: out1_gw 
+#
+
+XMLTP_RRG  XMLTP_CGW
+	#
+	# local parameters for XMLTP_RRG:
+	#
+	XMLTP_RRG.MAX_CLIENTS_SOCKETS	100
+	XMLTP_RRG.MAX_CLT_CONNECTIONS	30
+
+	MAX_CLIENTS_SOCKETS		550
+	MAX_CLT_CONNECTIONS		500
+	XMLTP_CGW.MAX_CLT_CONNECTIONS	300
+
+	CALLPARSERSPOOL_MAXRES		50	### enough for 100 or 500 client connections
+	default_MAX_CONNECTIONS		5
+
+	INITIAL_GATE_STATUS		open	### easier for testing ###
+
+	# applies to ALL destinations:
+	#
+	XMLTP_RRG.DEST_ROUTE_A		XML2SYB_1		# override the value in gxconfig
+	XMLTP_RRG.DEST_ROUTE_B		XML2SYB_1		# override the value in gxconfig
+	XMLTP_RRG.default_DEST_ROUTE_A	XML2SYB_1		# override the value in gxconfig
+	XMLTP_RRG.webf_DEST_ROUTE_A	XML2SYB_1		# override the value in gxconfig
+
+	XMLTP_RRG.USR_ID		jf		# for local unit testing -- change for YOUR database
+	XMLTP_RRG.webf_USR_ID		jf		# for local unit testing -- change for YOUR database
+	USR_ID				guest
+	USR_PWD_FILE			cfg/passwd.all_dest
+
+	QUEUE_DUMP_DIR		./queue_dump
+
+	WHO_HAS_STATS_PERM	oper 	su 	\
+				demo		\
+				dba		\
+				tomcat		\
+				out1_gw		\
+				jf
+
+	WHO_HAS_OPER_PERM	oper 	su 	\
+				dba		\
+				jf
+
+	WHO_HAS_SHUTDOWN_PERM	oper 	su 	\
+				dba		\
+				jf
+
+	PWD_FILE_OF_jf		cfg/passwd.jf	### for testing
+
+#
+# [EOF]
+#

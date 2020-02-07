@@ -1,0 +1,6 @@
+PYTHONPATH=../lib:../gx
+export PYTHONPATH
+XMLTP=./
+export XMLTP
+echo PYTHONPATH=$PYTHONPATH
+echo XMLTP = $XMLTP

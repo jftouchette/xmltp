@@ -1,0 +1,25 @@
+# xmltp_hosts			
+# -----------
+#
+# $Header$
+#
+# Definitions of the XMLTP servers (servername, hostname, port)
+# --------------------------------
+#
+# ---------------------------------------------------------------------
+# 2002jan24,jft: first GNU LGPL publication
+#
+
+
+# Local Unit tests:
+#			
+# srvName	host		port	# comments
+# -------	--------	----	------------------------------
+XMLTP_RRG	localhost	7778	typically, rrgx.py
+XML2SYB_1	localhost	7777	for a XML2SYB
+
+XMLTP_CGW	localhost	7779
+
+#			
+# EOF
+#
