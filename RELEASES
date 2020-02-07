@@ -1,0 +1,19 @@
+RELEASES --- XMLTP/L : "XMLTP Light"
+
+Copyright (c) 2003-2006 Jean-Francois Touchette, 
+version: 2004-June-12
+
+RELEASES
+--------
+
+2006-06-12: version 1.1.0 with (optional) persistent queues, using Berkeley DB 4.3.28, and bsddb3. 
+2004-11-07: version 1.0.0
+2004-02-16: version 0.3.2 small changes to allow to compile and run on Mac OS/X ("Darwin")
+2004-01-29: version 0.3.1 fixes (2) missing functions sock_obj_* in sock_obj.c
+2003-09-29: version 0.3.0
+
+SUGGESTIONS & BUG REPORTS
+-------------------------
+Please write email to:  jft@xmltp-l.org
+
+***

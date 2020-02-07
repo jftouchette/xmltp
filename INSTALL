@@ -1,0 +1,196 @@
+INSTALL --- Installation instructions for XMLTP/L
+
+Copyright (c) 2003-2006 Jean-Francois Touchette, 
+
+version: 2006-June-12
+
+See README for a first introduction about XMLTP/L.
+
+See "HISTORY" section at the end of this document for a list of
+chages made.
+
+REQUIREMENTS:
+------------
+ - GNU/Linux 2.4.x (probably works on 2.6.x -- not tested yet, 2004-oct-09)
+ - GNU Bison 1.33, or 1.875 (or newer distros), or 1.28 (comes with the Dev
+   tools on OS/X), or better.
+   You can find "bison" among the development packages of most Linux or BSD distros.
+ - Python 2.3.5 (or 2.3.3) : Most likely, your Linux distro did not install
+   the Python header files under /usr/include/python2.3/ (nor under
+   /usr/local/include/python2.3)... If this is so, then, you will need to
+   install it by yourself, from a "tarball".
+   Also, you can tweak the macro PYTHON_INC in .../src/xmltp/Makefile 
+   if you do not install Python under /usr/local/ -- Where it installs itself
+   usually.
+ - the usual GNU "C" compiler tools (standard C is enough; 
+   C++ is NOT used).
+ - Sybase ASE (dataserver) and Open Client (tm) must be installed 
+   before compiling and linking xml2syb. Versions 11.0.5 or 11.9.2 
+   are should be OK.
+   NOTES: Sybase 11.9.2 for Linux cannot be use in a commercial 
+   environment without paying a license. As far as I know, 
+   this condition does not apply to 11.0.5 for Linux which can be use 
+   without this restriction. 
+   You should READ THE LICENSE of the Sybase product(s) that
+   you want to use before installing/using it.
+
+INSTALLATION STEPS:
+------------------
+ 1) download the XMLTP/L source "tarball". It has a name like:
+
+      xmltp_src.VV.RR.FF.tgz
+
+
+ 2) Move this .tgz file to a convenient location, and, un-tar it:
+
+      tar -xzvf xmltp_src.VV.RR.FF.tgz
+
+    This will extract a xmltp.VV.RR.FF directory containing a bunch of
+    sub-directories and files (VV: version, RR: release, FF: fix).
+
+ 3) If you want to compile xml2syb, you need to install Sybase ASE 
+    (dataserver) and Open Client (tm). 
+    Also, you must modify you .bash_profile so that it assigns the
+    SYBASE environment variable to a proper value. To do so, you can
+    look in the .bash_profile of the "sybase" user created while installing
+    the Sybase RPMs.
+
+    NOTE: you can use "xmlfisrv" instead. See 'RUNNING "xmlfisrv" '
+
+ 4) Now, you can compile the binaries (executables and shared
+    libraries)...
+
+      cd xmltp.VV.RR.FF/src
+      make
+
+    NOTE: there is NO "./configure" to do at this moment in the
+       history of releases.  The source code and Makefile(s) 
+       expect that the above REQUIREMENTS are met.
+
+RUNNING the PROGRAMS:
+--------------------
+Let's assume that "make" has done its job. In which case, you
+have these files:
+	xmltp.VV.RR.FF/lib/
+		gx_poll.so
+		xmltp_gx.so
+
+	xmltp.VV.RR.FF/bin/
+		xml2syb
+		xmltp_test
+		xmlfisrv
+
+If you are still in the xmltp.VV.RR.FF/src directory, go up one level
+(cd ..) then cd into rrgx/  (That's xmltp.VV.RR.FF/rrgx if you come 
+from elsewhere).
+
+In xmltp.VV.RR.FF/rrgx/ you can start the RRGX server (RPC router) with
+the command:
+
+   sh start_rrg.sh
+
+NOTE: If you do not use the script "start_rrg.sh" to start rrgx.py,
+  then, you have to do ". ./pythonpath.sh" before starting rrgx.py
+  manually.
+
+Do "ps f" and see if you have a 5 or 6 python processes running...
+If you have them, you can skip the next three pararaphes!
+
+There are configuration files in xmltp.VV.RR.FF/rrgx/ and they should
+be enough to allow you to run RRGX "out-of-the-box".
+
+Now, if you look inside the file "gxserver.log", you should see
+all the messages that the RRG server has written when it started
+(and also those when it aborted the first time).
+
+If you go back in the shell in xmltp.VV.RR.FF/rrgx/, you can start an
+interactive XMLTP/L RPC command prompt. Just type:
+
+   sh xrpc.sh      # or "./xrpc.sh"
+
+This will launch "/usr/local/bin/python xrpc.py 7778", which will display:
+   
+   MSG: setting log file to: xrpc.log
+   Will connect to server at 127.0.0.1 : 7778 -- debug=0
+   connected to 7778  OK.
+   NOTE: it is up to you to do 'login' with an RPC.
+   xrpc ==> 
+
+At the "xrpc ==>" prompt, type:
+
+       login oper, oper
+       go
+
+You need to type "go" on the next line or ";" after the last word
+because "xrpc.py" is designed to allow multiple-lines input of
+RPC calls.
+
+After "login oper, oper ;", you will get the following output:
+
+    [GO or ';']
+   sending RPC...
+   0 results sets, 0 output params, 1 messages
+   0 : login accepted
+   return status:  0
+   xrpc ==>        
+
+The important thing here is "0 : login accepted". You are logged-in
+as an "operator". You can send RPC calls (which will fail if XML2SYB
+is not running :-), and give "operator commands" to the RRGX server.
+Type "help ;" to get the list of those commands. 
+
+To stop the RRGX server, send it the "shutdown ;" command, or, kill the
+first Python process (the one with the smallest pid) with the kill 
+command. You can find out the pid of the process with the "ps" or 
+"top" Unix/Linux commands. (You can also read the gxserver.log file,
+but, "ps" is easier).
+
+If you did not install Sybase and cannot run XML2SYB, you can use
+"xmlfisrv" and emulate it.
+
+
+RUNNING "xmlfisrv"
+------------------
+
+The "xmlfisrv.c" program emulates a database-to-XML converter (such as XML2SYB).
+It finds the XML responses to a few RPC calls in files.
+Some of those files (the smaller ones) are supplied in the ./bin directory.
+
+You can do:
+     cd bin
+     sh start_xmlfisrv.sh
+
+An example of the use of xmlfisrv:
+
+     ./xmlfisrv 7777  sprr_t20  sprr_ret0
+
+In that example, "7777" is the port number to listen on. It's the same port number
+that rrgx.py expect to forward RPC calls to.
+
+
+
+MISSING DOCS, XML2SYB CONFIG FILES, and so on.
+----------------------------------
+XML2SYB is there after you have done "make" (xmltp.*/bin/xml2syb), but
+it does not have a config file, and it needs one to start.
+
+Also, there is documentation that is not ready yet to be published,
+even though it is written (in French for some parts).
+
+Please give us a while to prepare the docs and config file(s). 
+
+If you are very very interested and cannot wait, please write email. 
+
+-------- jft {at} xmltp-l {dot} org
+
+HISTORY
+-------
+2006-June-12,jft: updated for release 1.1
+2004-oct-09,jft: updated for release 1.0
+2003-8-28: fixed some minor mistakes or ambiguities
+2003-2-05: added a step in INSTALLATION STEPS, namely, Sybase ASE and Open Client (tm)
+	     must be installed before compiling and linking xml2syb.
+2003-1-25: first version
+
+***
+

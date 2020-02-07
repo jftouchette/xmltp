@@ -1,0 +1,385 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>XMLTP/L - XMLTP Light - Introduction</title>
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="author" content="Jean-Francois Touchette">
+  <meta name="description"
+ content="Introduction to the XMLTP/L protocol and its implementation.">
+  <meta http-equiv="Keywords"
+ content="XMLTP/L XMLTP XMLTP-L XMLTP-Light XML-RPC SOAP XML lightweight multithread multi-thread server Python Bison parser transaction processing OLTP TP-Light RPC stored-procedure XML2SYB TDS Sybase Open-Client CT-Lib">
+  <meta name="KeyWords"
+ content="XMLTP/L XMLTP XMLTP-L XMLTP-Light XML-RPC SOAP XML lightweight multithread multi-thread server Python Bison parser transaction processing OLTP TP-Light RPC stored-procedure XML2SYB TDS Sybase Open-Client CT-Lib">
+</head>
+<body alink="#000099" bgcolor="#99ff99" link="#000099" text="#000000"
+ vlink="#990099">
+<h1>XMLTP/L &nbsp;- "XMLTP Light"</h1>
+<small>JF Touchette, 2006-June-12</small><br>
+<br>
+<div align="center"><a href="#Introduction">Introduction</a> - <a
+ href="#License">License</a> -&nbsp;<a href="#Download">Downloads</a>
+-&nbsp;<a href="#Documentation">Docs</a> -&nbsp; <a href="#News">Older
+news</a><br>
+</div>
+<h2>Latest news: The 1.1 release of XMLTP/L</h2>
+It's ready, you can download the <a href="XMLTP_L_intro.html#Download">1.1.0
+release</a>. <br>
+This new version adds (optional) persistent queues based on Berkeley DB
+(tested with DB version 4.3.28) and the bsddb3 Python module.<br>
+<br>
+<h2><a name="Introduction"></a>Introduction</h2>
+XMLTP/L or "XMLTP Light" is a lightweight RPC protocol which uses XML
+to
+encode the stream of data. It has been designed to do fast RPC calls
+over
+an <i>intranet,</i>within an enterprise. More specifically, the first
+purpose
+of XMLTP/L is to forward transactions (RPCs) to a database server, but,
+it
+can be used to do method calls to any server that follows the common
+RPC
+technique introduced by XML-RPC and older client/server protocols.<br>
+<br>
+The name "XMLTP Light" evokes the design goals and purposes of this
+protocol:<br>
+<ul>
+  <li>to transport "<a href="#note_1_TP_Light">TP Light</a>" remote
+procedure
+calls (RPC);</li>
+  <li>use a XML syntax to allow compatibility with various tools,
+existing
+or future;</li>
+  <li>good performance, with modest requirements (therefore, real
+practical
+scalability using simple hardware configurations);</li>
+  <li>have a lightweight, robust, implementation.</li>
+</ul>
+<br>
+To achieve its goal of being fast and "lightweight", XMLTP/L
+acknowledges
+the following constraints and limitations as "non-goals":<br>
+<ul>
+  <li>XMLTP/L does not pretend to do everything;</li>
+  <li>it uses a subset of XML (a full-fledge XML parser can parse
+XMLTP/L,
+but, not the reverse);</li>
+  <li>is not a universal transport for all datatypes;</li>
+  <li>is not the most "standardized" or the most buzzwords compliant
+technology
+to appear now, yesterday or tomorrow;</li>
+  <li>it is not as easy to install as XML-RPC (which is less than 20 KB
+of
+code in the Python 2.x standard install!).</li>
+</ul>
+<br>
+XMLTP/L is much more <i>boring</i> than other XML protocols such as
+SOAP or
+XML-RPC or any newer web services protocols that will appear
+real-soon-now.<br>
+<br>
+But, if it fills someone's need for a non-proprietary, robust, and
+flexible
+RPC protocol on their intranet, then, that would be great. <br>
+<br>
+XMLTP/L should be appealing to people who use stored procedure calls,
+and,
+who want more flexibility (multiple DBMS), and some level of XML
+compliance
+without suffering response time greater than 300 or 500 ms (like all
+implementations
+of RPC-over-XML that I have tried so far... I have not tried all of
+them,
+but, enough to convince me to write a custom XML subset parser in "C").
+<br>
+<br>
+XMLTP/L is distributed as source code (see Download) and is licensed
+under
+the GNU Library General Public License (GNU LGPL)<br>
+<br>
+<a href="xmltp_rrg_954x386.png"><img src="xmltp_rrg_767x305.png"
+ alt="schema of XMLTP/L servers interconnections" align="middle"
+ height="305" width="767"></a><br>
+<div align="center">[ click on image to see larger one ]<br>
+</div>
+<br>
+On the schema above you can see a small box called "XML-RPC or
+&nbsp;SOAP
+bridge". This does not exist yet. But, it would be rather easy to
+create such
+a "bridge" as the initial specs are similar to those of XML-RPC. Also,
+there
+is a single "dataserver". Actually, it is possible to put two or many
+behind
+the <a href="#RRGX_definition">RRGX,</a> which does "RPC Routing".<br>
+<br>
+Is this interesting? If so, read on...<br>
+<h2>Technical Specifications</h2>
+XMLTP/L is a simple XML based protocol, and, it only supports (4) four
+datatypes
+in the RPC parameters and in the tabular result set(s) which can be
+returned
+by the stored procedures. These datatypes are:<br>
+<ul>
+  <li>integer : 32 bits, most likely (Python allows for larger <b>int,</b>
+but XML2SYB uses ANSI "C" 32 bits <b>int </b>on GNU/Linux on x386)</li>
+  <li>float : double precision, most likely</li>
+  <li>timestamp : "YYYY-MM-DD HH:MM:SS.mmm"</li>
+  <li>string : with a maximum of 255 characters.</li>
+</ul>
+A value of any of these types can be flagged as "<b>Null</b>". &nbsp;In
+which
+case, the data that is associated to that value should be sent empty by
+the
+"server", and, it should be ignored by the "client".<br>
+<br>
+If we look at all the details, a XMLTP/L response contains:<br>
+<ul>
+  <li> a "return status" (always),</li>
+  <li> one or many result set(s) (optional),</li>
+  <li> messages(s) (optional),</li>
+  <li> output parameter(s) (optional).</li>
+</ul>
+A main design goal of XMLTP/L was to pump a high volume of transactions
+in
+and out of a relational database. We wanted some level of "vendor
+independance",
+specifically to suffer less from the vendor's frequent upgrades to its
+native
+client-server API. Also, we wanted to be able to mix datasources and
+perform
+RPC routing in a way that would be invisible ("transparent") to the web
+app
+server (or to other XMLTP/L clients connected to the RRGX). <br>
+<br>
+XMLTP/L acts like a universal database RPC protocol. The whole intranet
+can
+use XMLTP/L for RPC calls, and, vendors' proprietary protocols can be
+isolated
+on a server near the database itself. The "RRGX" allows to integrate
+multiple
+database servers together like if it was a single server. &nbsp;(Please
+note
+that XMLTP/L does not automate synchronisation of transactions on
+multiple
+dataservers: each RPC is independent of all other calls).<br>
+<br>
+<br>
+<a name="RRGX_definition"></a>The "RRGX" -- "RPC Router Gateway for
+XMLTP/L"
+does not use any proprietary client/server API. This RRGX allow to call
+procedures
+in multiple database servers as it routes the RPCs to the various
+"converter"
+programs according to the names of the procedures. <br>
+<br>
+The RRGX needs one "converter" per database protocol. Such "converter"
+programs
+are external programs and they can be built from the vendor's API libs
+and
+the the XMLTP/L modules. &nbsp;Currently, XML2SYB, "XML to Sybase", is
+already
+implemented.<br>
+<br>
+Note that it is also possible to code "stored procedured" in Python in
+a server
+similar to the RRGX (which is derived from the generic "gxserver.py"
+module).<br>
+<br>
+There are many other small features in the RRGX that makes it very
+useful
+in a real production environment:<br>
+<ul>
+  <li> log of events and messages (error, warning, trace &amp; debug)</li>
+  <li> dynamically adjustable trace level</li>
+  <li> built-in operator commands like: ps, who, stats...</li>
+  <li> gates which can be closed while maintenance is done on the
+database(s)
+behind the gateway:</li>
+  <ul>
+    <li> RPC gate (global)</li>
+    <li> connection pools gates</li>
+    <li> connection gate (global)</li>
+    <li> application specific gates (one gate for a list of RPC names).</li>
+  </ul>
+  <li> when a gate is closed, a user-defined message can be sent back
+to the clients</li>
+  <li> RPC result interceptions (with passive queueing or active
+re-forwarding).</li>
+</ul>
+<h2>Limitations, Trade-offs and Advantages</h2>
+The choice of only four simple datatypes shows that XMLTP/L does NOT
+attemp
+to solve any of the needs typical of multimedia<br>
+applications. It would probably be quite easy to support a BLOB (Binary
+Large
+Object) datatype, but, this is not a priority at this moment. <br>
+<br>
+Another limitation in this first implementation, is that the currently
+supported
+character set is "ISO-8859-1" (Latin European languages). Yet, the fact
+that
+this is a simple protocol (and the fact that the source code is
+available
+under the GNU LGPL license) should encourage developpers to adapt it to
+their
+own cultural needs. <br>
+<br>
+The XML syntax used is much more compact than the one used by XML-RPC
+(as
+it was in August 2001, when we started designing and building XMLTP/L).
+A
+typical RPC call stream or result stream is about twice smaller when it
+is
+encoded with XMLTP/L. This is because the tags in XMLTP/L are smaller
+and
+fewer. <br>
+<br>
+<h2>Technical Details about the Current Implementation</h2>
+We used four languages (GNU Bison, ANSI C, Python and Java) to do the
+current
+implementation. At this time, XMLTP/L can be used by programs written
+in
+three languages (Python, C, Java). <br>
+<br>
+The main building blocks of the implementation are:<br>
+<ul>
+  <li> a grammar suitable for GNU Bison (in other words, a "Yacc" .y
+source
+file). This grammar is done in a way that allows to do a multithread
+parser.</li>
+  <li> a C/Python module which does parsing in a multithreaded way.
+That "xmltp_gx.so"
+module allows to write both client and server programs in Python.
+Furthermore,
+it is currently used to build a "gateway" server, gxserver.py, which
+routes
+RPC (according to their names). The gateway gxserver.py (or RRGX) has
+many
+other features (like operator commands, RPC "gates") which are fully
+not
+described here.</li>
+  <li> a C program, XML2SYB, which convert back and forth between
+XMLTP/L
+RPC calls to native Sybase RPC calls (TDS protocol). XML2SYB acts as a
+XMLTP/L
+server.</li>
+  <li> a Java JDBC driver (client side of XMLTP/L) suitable for use
+with Tomcat
+web apps, or other Java programs.</li>
+</ul>
+<h2><a name="Download"></a>Download</h2>
+NOTE: the JDBC driver for XMLTP/L is not available here at this time
+(June 2006)
+<br>
+<br>
+Latest source "tarballs":<br>
+<ul>
+  <li><a href="xmltp_src.1.1.0.tgz">xmltp_src.1.1.0.tgz</a>
+(2006-june-12 release). See news about 1.1 release at the top of the
+page.<br>
+  </li>
+  <li><a href="xmltp_src.1.0.0.tgz">xmltp_src.1.0.0.tgz</a>
+(2004-nov-06 release) The "1.0" release. <br>
+  </li>
+</ul>
+<div style="margin-left: 40px;">Some users told us that gxserver was so
+stable that we might as well start to call it a 1.0 version. <br>
+This .tgz contains a few improvements in some *.py modules and a
+xmltp_gram.y grammar file that is compatible with the newer versions of
+Bison, such as 1.875<br>
+Also, there is now a database emulation tool, "<span
+ style="font-weight: bold;">xmlfisrv</span>", which allows to call a
+"stored procedure" which, actually, would be a file containing a
+response coded in XML (in XMLTP, more precisely). <br>
+Because "xmlfisrv.c" does not depend on any proprietary database header
+file to compile, nor on a database server to connect to, xmlfisrv is
+very useful for unit testing, demo or
+prototyping.<br>
+See the files README and INSTALL in the .tgz for more details.<br>
+</div>
+<ul>
+  <li><a href="xmltp_src.0.3.3.tgz">xmltp_src.0.3.3.tgz</a> (2004-02-17
+release) supports/expects Python 2.3.x "vanilla" install in /usr/local/
+    <br>
+Still same support as 0.3.2 for <a href="README.OSX">OSX</a> </li>
+  <li><a href="xmltp_src.0.3.2.tgz">xmltp_src.0.3.2.tgz</a> (2004-02-16
+release) version 0.3.2 small changes to allow to compile and run on Mac
+OS/X "Darwin". <a href="README.OSX">README.OSX</a> </li>
+  <li><a href="xmltp_src.0.3.1.tgz">xmltp_src.0.3.1.tgz</a> (2004-01-29
+release). </li>
+</ul>
+<br>
+<h2><a name="License"></a>License</h2>
+XMLTP/L source code is licensed under the GNU Library General Public
+License
+(GNU LGPL). See the file "LICENSE" in the source tarball.<br>
+<h2><a name="Documentation"></a>Documentation</h2>
+These documents are available now:<br>
+<ul>
+  <li><a href="xmltp-l_specs_01.html">XMLTP/L Specifications</a>(includes
+a "DTD")</li>
+</ul>
+We need to write more documentations on the more detailed subjects. If
+you
+have specific interests for documentation. Please tell us.<br>
+<h2><a name="News"></a>News</h2>
+2006.6.12: "xmltp_src.1.1.0.tgz" - version 1.1.0 with (optional)
+persistent queues, using Berkeley DB 4.3.28, and bsddb3.<br>
+2004.11.7: "xmltp_src.1.0.0.tgz"<br>
+2004.2.17 : "xmltp_src.0.3.3.tgz"<br>
+2004.2.16 : "xmltp_src.0.3.2.tgz"<br>
+2004.1.29 : "xmltp_src.0.3.1.tgz"<br>
+2003.9.29 : "xmltp_src.0.3.0.tgz"<br>
+2003.9.24 : added this "News" section, added "Documentation" section,
+with
+link to "XMLTP/L Specifications"<br>
+2003.3.15 : added link to "xmltp_src_012_2003feb28.tgz"<br>
+2003.1.25-29: first version.
+<h2>Contacts &amp; Credits</h2>
+The following mail addresses are human readabe only to try to reduce
+the probability
+of automated collecting by mail spammers:<br>
+<ul>
+  <li><b>jft</b> -- JF Touchette -- XMLTP/L parser , RRGX and related
+Python
+modules</li>
+</ul>
+All these addresses are <i>at</i> this domain (<b>xmltp-l.org</b>).<br>
+<hr size="2" width="100%">
+<h3><a name="notes"></a>NOTES</h3>
+<a name="note_1_TP_Light"></a>(1) "<b>TP Light</b>": "TP Light" is
+doing "light"
+OLTP (On-Line Transaction Processing) by using RPCs to call procedures
+stored
+in a SQL database (this could be a Sybase, Oracle, IBM DB2, or, any
+other
+DBMS which can do that).<br>
+References:<br>
+Robert Orfali, Dan Harkey &amp; Jeri Edwards: "Essential Client/Server
+Survival
+Guide". New York, John Wiley &amp; Sons, Inc., 1994.<br>
+"Scale Up with TP Monitors" in BYTE, April 1995, pages 123-128.<br>
+<br>
+<a name="note_2_biref_history_of_RPC_calls"></a>(2) A Very Brief
+History of
+Client/Server RPC calls:<br>
+Sending remote procedure calls RPC to a database is an efficient way to
+retrieve
+data and separate tasks, both between developpers, and, between
+servers: app
+server(s), data server(s). In the mid-90s, RPCs were "in". That was the
+time
+when "fat clients" were still the "cool thing".<br>
+The fat clients have been dethroned by the thin ones since that time,
+but,
+many entreprises still successfully leverage RPCs stricly on the server
+side.
+<br>
+<hr size="2" width="100%">
+<small>(new webhosting since 2004-1-18)</small>
+<br>
+***<br>
+<br>
+</body>
+</html>

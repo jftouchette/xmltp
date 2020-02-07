@@ -1,0 +1,70 @@
+README --- XMLTP/L : "XMLTP Light"
+
+Copyright (c) 2003-2006 Jean-Francois Touchette, 
+version: 2004-6-12
+
+RELEASES: see "RELEASES" file to see the latest changes.
+--------
+
+-------------------------------------------------------------------
+
+NOTE: See the homepage http://www.xmltp-l.org for most recent info.
+
+--------------------------------------------------------------------
+
+INSTALLATION: see "INSTALL" file.
+------------
+
+INTRODUCTION
+------------
+"XMLTP Light" is a lightweight RPC protocol which uses XML to
+encode the stream of data.  It has been designed to do fast RPC
+calls over an _intranet_, within an enterprise, to forward
+transactions (RPCs) to a database server. 
+
+The name of "XMLTP Light" evokes its purposes and design goals:
+- to transport "TP Light" -- lightweight On-Line Transaction
+Processing, see NOTE(1) -- remote procedure calls (RPC),
+- use a XML syntax to allow compatibility with various tools,
+existing or future,
+- have a lightweight, robust, implementation,
+- good performance, with modest requirements (therefore, real 
+practical scalability using simple hardware configurations).
+
+To achieve its goal of being fast and "lightweight", XMLTP/L 
+acknowledges the following constraints and limitations as
+"non-goals":
+- XMLTP/L does not pretend to do everything, 
+- it uses a subset of XML (a full-fledge XML parser can 
+parse XMLTP/L, but, not the reverse),
+- is not a universal transport for all datatypes,
+- is not the most "standardized" or the most buzzwords 
+compliant technology to appear now, yesterday or tomorrow,
+- it is not as easy to install as XML-RPC (which is less 
+than 20 KB of code in the Python 2.x standard install!).
+
+XMLTP/L is much more boring than other XML protocols such as
+SOAP or XML-RPC or any newer web services protocols that 
+will appear real-soon-now.
+
+But, if it fills someone's need for a non-proprietary, robust,
+and flexible RPC protocol on their intranet, then, it is
+just plain great. 
+
+XMLTP/L should be appealing to people who use stored procedure
+calls, and, who want more flexibility (multiple DBMS), and some
+level of XML compliance without suffering response time greater
+than 300 or 500 ms (all implementations of RPC-over-XML that I
+have tried so far...  not all of them, but, enough to convince to
+write a custom XML subset parser). 
+
+Please see "XMLTP_intro.html" file for a longer description
+and more details.
+
+LICENSE
+-------
+XMLTP/L source code is licensed under the GNU Library General Public License 
+(GNU LGPL). See the file "LICENSE" for the text of this license. Or look at the
+GNU web site.
+
+***

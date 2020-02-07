@@ -1,0 +1,107 @@
+README.OSX --- XMLTP/L : "XMLTP Light" on OS/X Darwin
+
+Copyright (c) 2004-6 Jean-Francois Touchette
+version: 2006-6-12
+
+RELEASES: see "RELEASES" file to see the latest changes.
+--------
+
+FIRST
+-----
+ Please see the README file for general introduction and so on.
+ This file content supplemental info specific to OS/X.
+
+SUPPLEMENTAL NOTES for OS/X
+---------------------------
+1. Panther, Tiger
+  The current version of XMLTP/L works on Tiger, 10.4.x
+  It also probably works on 10.3.x aka Panther.
+  The previous version of XMLTP/L (1.0.0) had been compiled and tested on OS/X 10.3.2 to 10.3.5
+  "Panther", and on Tiger also.
+
+2. Python 2.3.x
+
+  You must get the sources for Python 2.3.5 (or 2.3.3) and compile/install it
+  on your OS/X machine.
+
+  The Python 2.3 application installed by OS/X 10.3.x or 10.4.x
+  misses a few things and does not allow to build xmltp_gx.so
+  and gx_poll.so -- more precisely, libpython2.3.a is missing.
+
+  ...Don't get mad, get the sources!
+
+  You can get the latest sources for Python 2.3.x from python.org
+
+  In theory, once you have expanded the .tar.gz file into a subdirectories
+  structure, you should be able to recompile and install Python 2.3.3
+  in /usr/local/bin and /usr/local/lib/ with:
+
+        ./configure
+	make
+	make install		# no need to be root
+
+  But, in practice, there is a -DWITH_NEXT_FRAMEWORK missing in the makefile
+  on line 1030, where ./Modules/posixmodule.c is compiled.  Without it, you will
+  get an undefined symbol ("environ") when you link anything against
+  libpython2.3.a
+
+  So, after you do ./configure, but, before you type "make", edit the Makefile
+  and add -DWITH_NEXT_FRAMEWORK just before "-o Modules/posixmodule.o" on that
+  line 1030 (the line number might change in the next version of Python 2.3.x !!!)
+
+  (Yes, there must be a way to NOT edit the Makefile and do that more
+  nicely, but i do not know yet.  And the #if in ./Modules/posixmodule.c will
+  probably be fixed very soon by the Python maintainers).
+
+
+3. Compiling the XMLTP/L shared libraries and executables.
+
+  The instructions in the "INSTALL" file are mostly OK also for OS/X.
+
+  When you do "make" in ./src/ you will get some errors...
+
+  You will need to cd src/xmltp/ and do:
+
+	make -f Makefile.OSX
+
+  After that, you will have what you need in ./bin and ./lib
+
+4. Running the RRGX server and xrpc.py
+
+  Please use start_rrg.sh in ./rrgx
+
+  It invokes /usr/local/bin/python to run rrgx.py -- and, that is 
+  right.
+
+  /usr/local/bin/python is the Python 2.3.5 which you have just built in step 2.
+
+  Similarly, you must use /usr/local/bin/python to run xrpc.py
+
+  Therefore, in ./rrgx/ you should use xrpc_OSX.sh
+
+5. Running "xmlfisrv"
+
+  The "xmlfisrv.c" program emulates a database-to-XML converter.
+  It finds the XML responses to a few RPC calls in files.
+  Some of those files (the smaller ones) are supplied in the ./bin 
+  directory.
+
+  You can do:
+     cd bin
+     sh start_xmlfisrv.sh
+
+  An example of the use of xmlfisrv:
+
+     ./xmlfisrv 7777  sprr_t20  sprr_ret0
+
+  "7777" is the port number to listen on. It's the same port number
+  that rrgx.py expect to forward RPC calls to.
+
+
+-------------------------------------------------------------------
+
+NOTE: See the homepage http://www.xmltp-l.org for most recent info.
+
+--------------------------------------------------------------------
+
+***
