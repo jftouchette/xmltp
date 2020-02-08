@@ -12,6 +12,6 @@ This old source code is 99.9% still compatible with the new version.
 You will have to pay attention to the cs_version() library initialization call.
 WARNING: This source code is obsolete and it is not currently used.
 -------  Technology has moved on and we all write better code now, or we hope to do so :)
-AUTHORS: Several source files were written by JF Touchette, but, other files have been written by other persons.
--------  Please see the author's name in the Copyright notice of each file.
+AUTHORS: Many source files were written by JF Touchette, but, SEVERAL SOURCE FILES HAVE BEEN WRITTEN BY OTHER PERSONS.
+-------  Please see the author's name in the Copyright notice and comments at beginning of each file.
 2020-2-07.
