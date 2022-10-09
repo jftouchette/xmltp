@@ -1,8 +1,10 @@
-# xmltp-light
+xmltp-light
+=============
 XMLTP/L sample code for the article "XMLTP/L, XMLTP Light"
 published by Jean-Francois Touchette
 on March 25, 2003 in Linux Journal
 https://www.linuxjournal.com/article/6743
+
 NOTES: To build the .so libraries (using the makefile-s) and to run the code, you need:
 (1) Python 2.3 compiled from source (you need PyConfig.h to compile the xmltp_gx.so module).
 (2) Sybase Open Client Library from that year, 2003 or a bit earlier (cslib and ctlib version 10.x).
